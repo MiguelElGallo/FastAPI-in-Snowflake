@@ -4,7 +4,7 @@
   </a>
 </p>
 <p align="center">
-  <em>A production-ready FastAPI app running inside Snowflake Container Services — fully declarative, no Terraform required.</em>
+  <em>A FastAPI app running inside Snowflake Container Services — fully declarative, no Terraform required.</em>
 </p>
 <p align="center">
   <a href="https://github.com/MiguelElGallo/FastAPI-in-Snowflake/actions/workflows/deploy.yml">
@@ -22,9 +22,11 @@
 - **Fully declarative** — infrastructure defined in `snowflake.yml` and `spec.yml`, deployed with the `snow` CLI
 - **Zero external dependencies** — no Terraform, no external Docker registry, no separate database server
 - **JWT authentication** — built-in user management with role-based access control
-- **OAuth in production** — automatic token injection via SPCS; no Snowflake credentials stored in the container
+- **OAuth token auth** — automatic token injection via SPCS; no Snowflake credentials stored in the container
 - **CI/CD ready** — GitHub Actions workflows for one-click setup and continuous deployment
 - **Self-hosted docs** — Swagger UI assets bundled in the image (SPCS ingress CSP blocks external CDNs)
+
+> **Warning:** Most enterprise Snowflake accounts use **private endpoints** (e.g. AWS PrivateLink, Azure Private Link). If your account uses private connectivity, you may need to adjust network rules, DNS configuration, and service endpoint settings. See the [Snowflake private connectivity documentation](https://docs.snowflake.com/en/user-guide/private-connectivity) for details.
 
 ## How It Works
 
