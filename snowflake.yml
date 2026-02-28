@@ -1,11 +1,5 @@
 definition_version: "2"
 
-mixins:
-  spcs_defaults:
-    stage: fastapi_db.fastapi_schema.fastapi_stage
-    external_access_integrations:
-      - fastapi_external_access
-
 entities:
   fastapi_repo:
     type: image-repository

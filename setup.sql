@@ -55,19 +55,21 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 -- 7. External access integration (for outbound HTTPS if needed)
-CREATE NETWORK RULE IF NOT EXISTS fastapi_egress_rule
-  MODE = EGRESS
-  TYPE = HOST_PORT
-  VALUE_LIST = ('0.0.0.0:443');
-
-CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS fastapi_external_access
-  ALLOWED_NETWORK_RULES = (fastapi_egress_rule)
-  ENABLED = TRUE;
+-- NOTE: Not supported on trial accounts. Uncomment on paid accounts.
+-- CREATE NETWORK RULE IF NOT EXISTS fastapi_egress_rule
+--   MODE = EGRESS
+--   TYPE = HOST_PORT
+--   VALUE_LIST = ('0.0.0.0:443');
+--
+-- CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS fastapi_external_access
+--   ALLOWED_NETWORK_RULES = (fastapi_egress_rule)
+--   ENABLED = TRUE;
 
 -- 8. OAuth security integration for SPCS service-to-Snowflake auth
-CREATE SECURITY INTEGRATION IF NOT EXISTS snowservices_ingress_oauth
-  TYPE = oauth
-  OAUTH_CLIENT = snowservices_ingress
-  ENABLED = TRUE;
+-- NOTE: May require specific account features. Uncomment if needed.
+-- CREATE SECURITY INTEGRATION IF NOT EXISTS snowservices_ingress_oauth
+--   TYPE = oauth
+--   OAUTH_CLIENT = snowservices_ingress
+--   ENABLED = TRUE;
 
 SELECT 'Setup complete!' AS status;
