@@ -1,0 +1,88 @@
+# ====================================================================
+# FastAPI in Snowflake — One-time Infrastructure Setup
+# Trigger: manual (workflow_dispatch)
+# ====================================================================
+name: "Setup SPCS Infrastructure"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+  SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+  SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+  SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        uses: Snowflake-Labs/snowflake-cli-action@v1
+        with:
+          cli-version: "latest"
+          default-config-file-path: ""  # We use env vars / flags instead
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" | base64 -d > /tmp/snowflake_key.p8
+          chmod 600 /tmp/snowflake_key.p8
+
+      - name: Run setup SQL
+        run: |
+          snow sql \
+            --query "$(cat setup.sql)" \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role ACCOUNTADMIN \
+            --warehouse "$SNOWFLAKE_WAREHOUSE"
+
+      - name: Create image repository
+        run: |
+          snow spcs image-repository create fastapi_repo \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA" \
+            --if-not-exists
+
+      - name: Create compute pool
+        run: |
+          snow spcs compute-pool create fastapi_pool \
+            --family CPU_X64_XS \
+            --min-nodes 1 \
+            --max-nodes 1 \
+            --auto-resume \
+            --auto-suspend-secs 300 \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --if-not-exists
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/snowflake_key.p8

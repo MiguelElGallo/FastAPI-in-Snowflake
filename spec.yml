@@ -1,0 +1,28 @@
+spec:
+  containers:
+    - name: fastapi-app
+      image: /fastapi_db/fastapi_schema/fastapi_repo/fastapi-app:latest
+      env:
+        SNOWFLAKE_ACCOUNT: "{{ env.SNOWFLAKE_ACCOUNT }}"
+        SNOWFLAKE_DATABASE: fastapi_db
+        SNOWFLAKE_SCHEMA: fastapi_schema
+        SNOWFLAKE_WAREHOUSE: fastapi_wh
+        JWT_SECRET_KEY: "{{ env.JWT_SECRET_KEY }}"
+        FIRST_SUPERUSER: admin@example.com
+        FIRST_SUPERUSER_PASSWORD: "{{ env.FIRST_SUPERUSER_PASSWORD }}"
+        # When running in SPCS, use OAuth token-based auth (auto-injected)
+        SNOWFLAKE_AUTH_TYPE: oauth
+      readinessProbe:
+        port: 8000
+        path: /api/v1/health
+      resources:
+        requests:
+          cpu: "0.5"
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+  endpoints:
+    - name: fastapi
+      port: 8000
+      public: true

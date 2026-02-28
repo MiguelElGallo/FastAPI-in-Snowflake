@@ -1,0 +1,33 @@
+definition_version: "2"
+
+mixins:
+  spcs_defaults:
+    stage: fastapi_db.fastapi_schema.fastapi_stage
+    external_access_integrations:
+      - fastapi_external_access
+
+entities:
+  fastapi_repo:
+    type: image-repository
+    database: fastapi_db
+    schema: fastapi_schema
+
+  fastapi_pool:
+    type: compute-pool
+    instance_family: CPU_X64_XS
+    min_nodes: 1
+    max_nodes: 1
+    auto_resume: true
+    auto_suspend_secs: 300
+    comment: "Compute pool for FastAPI service"
+
+  fastapi_service:
+    type: service
+    compute_pool: fastapi_pool
+    spec:
+      spec_file: spec.yml
+    database: fastapi_db
+    schema: fastapi_schema
+    min_instances: 1
+    max_instances: 1
+    comment: "FastAPI application running in SPCS"

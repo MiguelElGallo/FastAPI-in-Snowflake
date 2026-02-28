@@ -1,0 +1,152 @@
+# ====================================================================
+# FastAPI in Snowflake — Build, Push, Deploy
+# Trigger: push to main
+# ====================================================================
+name: "Deploy to SPCS"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+  SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+  SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+  SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+  IMAGE_REPO_PATH: /${{ secrets.SNOWFLAKE_DATABASE }}/${{ secrets.SNOWFLAKE_SCHEMA }}/fastapi_repo
+  IMAGE_NAME: fastapi-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        uses: Snowflake-Labs/snowflake-cli-action@v1
+        with:
+          cli-version: "latest"
+          default-config-file-path: ""
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" | base64 -d > /tmp/snowflake_key.p8
+          chmod 600 /tmp/snowflake_key.p8
+
+      # --- Resolve registry URL ---
+      - name: Get image registry URL
+        id: registry
+        run: |
+          REGISTRY_URL=$(snow spcs image-repository url fastapi_repo \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA" \
+            | tr -d '[:space:]')
+          echo "url=$REGISTRY_URL" >> "$GITHUB_OUTPUT"
+          echo "Registry URL: $REGISTRY_URL"
+
+      # --- Login to Snowflake image registry ---
+      - name: Docker login to Snowflake registry
+        run: |
+          snow spcs image-registry login \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE"
+
+      # --- Build & Push ---
+      - name: Build Docker image
+        run: |
+          FULL_IMAGE="${{ steps.registry.outputs.url }}/$IMAGE_NAME:${{ github.sha }}"
+          LATEST_IMAGE="${{ steps.registry.outputs.url }}/$IMAGE_NAME:latest"
+          docker build \
+            -t "$FULL_IMAGE" \
+            -t "$LATEST_IMAGE" \
+            .
+          echo "FULL_IMAGE=$FULL_IMAGE" >> "$GITHUB_ENV"
+          echo "LATEST_IMAGE=$LATEST_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Push Docker image
+        run: |
+          docker push "$FULL_IMAGE"
+          docker push "$LATEST_IMAGE"
+
+      # --- Upload spec and deploy ---
+      - name: Upload spec to stage
+        run: |
+          snow stage copy spec.yml @fastapi_stage/specs/ \
+            --overwrite \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA"
+
+      - name: Deploy / Upgrade service
+        run: |
+          # Try to create the service; if it exists, upgrade it
+          snow spcs service create fastapi_service \
+            --compute-pool fastapi_pool \
+            --spec-path spec.yml \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA" \
+            --if-not-exists || true
+
+          snow spcs service upgrade fastapi_service \
+            --spec-path spec.yml \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA"
+
+      - name: Check service status
+        run: |
+          snow spcs service status fastapi_service \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA"
+
+      - name: Get service endpoint URL
+        run: |
+          snow spcs service list-endpoints fastapi_service \
+            --temporary-connection \
+            --account "$SNOWFLAKE_ACCOUNT" \
+            --user "$SNOWFLAKE_USER" \
+            --authenticator SNOWFLAKE_JWT \
+            --private-key-file /tmp/snowflake_key.p8 \
+            --role "$SNOWFLAKE_ROLE" \
+            --database "$SNOWFLAKE_DATABASE" \
+            --schema "$SNOWFLAKE_SCHEMA"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/snowflake_key.p8

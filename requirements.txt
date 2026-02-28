@@ -1,0 +1,7 @@
+fastapi[standard]>=0.115,<1.0
+pydantic-settings>=2.0,<3.0
+pydantic[email]>=2.0,<3.0
+snowflake-connector-python>=3.6,<4.0
+python-jose[cryptography]>=3.3,<4.0
+passlib[bcrypt]>=1.7,<2.0
+uvicorn[standard]>=0.30,<1.0
