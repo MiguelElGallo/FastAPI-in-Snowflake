@@ -54,6 +54,11 @@ CREATE TABLE IF NOT EXISTS items (
     updated_at  TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 );
 
+-- Grant table-level privileges to fastapi_role
+-- (tables above are created by ACCOUNTADMIN, so explicit grants are needed)
+GRANT ALL ON ALL TABLES IN SCHEMA fastapi_db.fastapi_schema TO ROLE fastapi_role;
+GRANT ALL ON FUTURE TABLES IN SCHEMA fastapi_db.fastapi_schema TO ROLE fastapi_role;
+
 -- 7. External access integration (for outbound HTTPS if needed)
 -- NOTE: Not supported on trial accounts. Uncomment on paid accounts.
 -- CREATE NETWORK RULE IF NOT EXISTS fastapi_egress_rule

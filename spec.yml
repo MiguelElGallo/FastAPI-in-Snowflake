@@ -3,11 +3,10 @@ spec:
     - name: fastapi-app
       image: /fastapi_db/fastapi_schema/fastapi_repo/fastapi-app:latest
       env:
-        SNOWFLAKE_ACCOUNT: LRKEXKW-XEA38443
-        SNOWFLAKE_HOST: lrkexkw-xea38443.snowflakecomputing.com
-        SNOWFLAKE_DATABASE: fastapi_db
-        SNOWFLAKE_SCHEMA: fastapi_schema
+        # SNOWFLAKE_ACCOUNT, SNOWFLAKE_HOST, SNOWFLAKE_DATABASE, SNOWFLAKE_SCHEMA
+        # are auto-injected by SPCS — do NOT override them here.
         SNOWFLAKE_WAREHOUSE: fastapi_wh
+        SNOWFLAKE_ROLE: fastapi_role
         JWT_SECRET_KEY: CHANGE-ME-in-production
         FIRST_SUPERUSER: admin@example.com
         FIRST_SUPERUSER_PASSWORD: changethis
