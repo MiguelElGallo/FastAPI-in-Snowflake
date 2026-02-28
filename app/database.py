@@ -22,14 +22,15 @@ def _get_connection_params() -> dict[str, Any]:
     }
 
     if settings.SNOWFLAKE_AUTH_TYPE == "oauth":
-        # Inside SPCS, the OAuth token is mounted automatically
+        # Inside SPCS, the OAuth token is mounted at /snowflake/session/token
         token_path = "/snowflake/session/token"
         if os.path.exists(token_path):
             with open(token_path) as f:
                 token = f.read().strip()
             base["authenticator"] = "oauth"
             base["token"] = token
-            # SPCS OAuth connections don't need host — connector resolves via account
+            # SPCS requires explicit host for OAuth connections
+            base["host"] = settings.SNOWFLAKE_HOST
         else:
             raise RuntimeError(
                 "SNOWFLAKE_AUTH_TYPE=oauth but token file not found at /snowflake/session/token"

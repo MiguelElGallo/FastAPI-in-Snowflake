@@ -103,6 +103,39 @@ This creates: database, schema, tables, image repository, compute pool.
 
 Push to `main` → GitHub Actions builds the image, pushes to Snowflake registry, and deploys/upgrades the service.
 
+### 4. Find your service URL
+
+After deployment, retrieve the public endpoint URL with:
+
+```bash
+snow spcs service list-endpoints fastapi_service \
+  --database fastapi_db \
+  --schema fastapi_schema
+```
+
+This returns a table with the `ingress_url` — your app's public URL:
+
+```
+| name    | port | protocol | is_public | ingress_url                                      |
+|---------+------+----------+-----------+--------------------------------------------------|
+| fastapi | 8000 | HTTP     | true      | <hash>-<org>-<account>.snowflakecomputing.app    |
+```
+
+Key URLs:
+- **App root:** `https://<ingress_url>`
+- **Swagger docs:** `https://<ingress_url>/api/v1/docs`
+- **Health check:** `https://<ingress_url>/api/v1/health`
+
+> **Note:** SPCS public endpoints require Snowflake authentication. When you visit the URL in a browser, you'll be prompted to log in with your Snowflake credentials (SSO).
+
+You can also check service status at any time:
+
+```bash
+snow spcs service status fastapi_service \
+  --database fastapi_db \
+  --schema fastapi_schema
+```
+
 ## API Endpoints
 
 | Method | Path | Description | Auth |

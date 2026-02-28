@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     # --- Snowflake ---
     SNOWFLAKE_ACCOUNT: str = ""
+    SNOWFLAKE_HOST: str = ""  # e.g. orgname-account.snowflakecomputing.com
     SNOWFLAKE_USER: str = ""
     SNOWFLAKE_PASSWORD: str = ""
     SNOWFLAKE_DATABASE: str = "fastapi_db"

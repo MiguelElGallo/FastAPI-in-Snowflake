@@ -3,13 +3,14 @@ spec:
     - name: fastapi-app
       image: /fastapi_db/fastapi_schema/fastapi_repo/fastapi-app:latest
       env:
-        SNOWFLAKE_ACCOUNT: "{{ env.SNOWFLAKE_ACCOUNT }}"
+        SNOWFLAKE_ACCOUNT: LRKEXKW-XEA38443
+        SNOWFLAKE_HOST: lrkexkw-xea38443.snowflakecomputing.com
         SNOWFLAKE_DATABASE: fastapi_db
         SNOWFLAKE_SCHEMA: fastapi_schema
         SNOWFLAKE_WAREHOUSE: fastapi_wh
-        JWT_SECRET_KEY: "{{ env.JWT_SECRET_KEY }}"
+        JWT_SECRET_KEY: CHANGE-ME-in-production
         FIRST_SUPERUSER: admin@example.com
-        FIRST_SUPERUSER_PASSWORD: "{{ env.FIRST_SUPERUSER_PASSWORD }}"
+        FIRST_SUPERUSER_PASSWORD: changethis
         # When running in SPCS, use OAuth token-based auth (auto-injected)
         SNOWFLAKE_AUTH_TYPE: oauth
       readinessProbe:
