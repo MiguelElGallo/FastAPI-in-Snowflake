@@ -27,10 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Snowflake CLI
-        uses: Snowflake-Labs/snowflake-cli-action@v1
-        with:
-          cli-version: "latest"
-          default-config-file-path: ""
+        run: pip install snowflake-cli
 
       - name: Write private key
         run: |
