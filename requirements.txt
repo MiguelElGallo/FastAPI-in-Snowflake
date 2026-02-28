@@ -4,4 +4,5 @@ pydantic[email]>=2.0,<3.0
 snowflake-connector-python>=3.6,<4.0
 python-jose[cryptography]>=3.3,<4.0
 passlib[bcrypt]>=1.7,<2.0
+bcrypt==4.0.1  # passlib incompatible with bcrypt>=4.1 (wrap-bug detection fails)
 uvicorn[standard]>=0.30,<1.0

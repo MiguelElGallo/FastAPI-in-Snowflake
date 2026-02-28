@@ -59,6 +59,9 @@ CREATE TABLE IF NOT EXISTS items (
 GRANT ALL ON ALL TABLES IN SCHEMA fastapi_db.fastapi_schema TO ROLE fastapi_role;
 GRANT ALL ON FUTURE TABLES IN SCHEMA fastapi_db.fastapi_schema TO ROLE fastapi_role;
 
+-- Grant fastapi_role to the deploying user (change 'miguelp' to your username)
+-- GRANT ROLE fastapi_role TO USER miguelp;
+
 -- 7. External access integration (for outbound HTTPS if needed)
 -- NOTE: Not supported on trial accounts. Uncomment on paid accounts.
 -- CREATE NETWORK RULE IF NOT EXISTS fastapi_egress_rule
