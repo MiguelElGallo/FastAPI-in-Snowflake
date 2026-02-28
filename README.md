@@ -128,6 +128,17 @@ Key URLs:
 
 > **Note:** SPCS public endpoints require Snowflake authentication. When you visit the URL in a browser, you'll be prompted to log in with your Snowflake credentials (SSO).
 
+### 5. Log in to the API
+
+After authenticating with Snowflake SSO, open the Swagger docs at `/api/v1/docs` and click the **Authorize** button. Use the default superuser credentials (created automatically on first startup):
+
+| Field | Value |
+|-------|-------|
+| **username** | `admin@example.com` |
+| **password** | `changethis` |
+
+These are set via the `FIRST_SUPERUSER` / `FIRST_SUPERUSER_PASSWORD` env vars in `spec.yml`. **Change them for production.**
+
 You can also check service status at any time:
 
 ```bash
